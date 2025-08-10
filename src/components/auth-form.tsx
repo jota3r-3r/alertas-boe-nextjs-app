@@ -2,14 +2,16 @@
 'use client'; // <-- IMPORTANTE: Esto le dice a Next.js que este componente es para el cliente
 
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../lib/firebase'; // Importa las instancias de Firebase
+import { auth } from '../lib/firebase'; // SOLO importa 'auth' de tu archivo de Firebase
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut, 
     onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; // Para guardar info del usuario en Firestore
+// Importa las funciones de Firestore y la función para obtener la app Firebase
+import { getFirestore, doc, setDoc } from 'firebase/firestore'; 
+import { getApp } from 'firebase/app'; // Para obtener la instancia de la aplicación Firebase
 
 function AuthForm() {
   const [email, setEmail] = useState(''); 
@@ -18,6 +20,7 @@ function AuthForm() {
   const [message, setMessage] = useState(''); 
 
   useEffect(() => {
+    // Suscribe a los cambios de estado de autenticación
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser); 
       if (currentUser) {
@@ -26,6 +29,7 @@ function AuthForm() {
         setMessage('No hay sesión iniciada.'); 
       }
     });
+    // Limpia la suscripción al desmontar el componente
     return () => unsubscribe(); 
   }, []); 
 
@@ -35,21 +39,40 @@ function AuthForm() {
       return;
     }
     try {
+      // Intenta crear el usuario con Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
       setMessage(`¡Usuario ${newUser.email} registrado y logeado exitosamente!`);
 
-      // Guarda información adicional del usuario en Firestore
-      await setDoc(doc(db, "users", newUser.uid), {
-          email: newUser.email,
-          fechaRegistro: new Date().toISOString(),
-          plan: "Free", // Valor por defecto para nuevos registros web
-          // ... puedes añadir aquí más campos por defecto o vacíos
-      });
-      console.log("Información básica del usuario guardada en Firestore.");
+      // =====================================================================================
+      // NUEVO BLOQUE TRY-CATCH para la escritura en Firestore
+      // Esto aísla los errores de Firestore de los de Authentication y maneja el "Unknown SID".
+      // =====================================================================================
+      try {
+          // Obtiene la instancia de la aplicación Firebase ya inicializada.
+          const currentApp = getApp(); 
+          // Obtiene la instancia de Firestore usando esa app, asegurando una conexión válida.
+          const directDb = getFirestore(currentApp); 
 
-    } catch (error: any) {
-      console.error("Error al registrar:", error.code, error.message);
+          // Guarda información adicional del usuario en Firestore
+          await setDoc(doc(directDb, "users", newUser.uid), {
+              email: newUser.email,
+              fechaRegistro: new Date().toISOString(),
+              plan: "Free", // Valor por defecto para nuevos registros web
+              // ... puedes añadir aquí más campos por defecto o vacíos
+          });
+          console.log("Información básica del usuario guardada en Firestore.");
+
+      } catch (firestoreError: any) { // Captura errores ESPECÍFICOS de Firestore aquí
+          console.error("Error al guardar en Firestore (después de autenticación):", firestoreError.code, firestoreError.message);
+          // Si hubo un error en Firestore, informamos al usuario, pero la cuenta de Auth ya está creada.
+          setMessage(`¡Usuario ${newUser.email} registrado, pero hubo un error al guardar sus datos en Firestore. (${firestoreError.message})`);
+          // No hacemos 'return' aquí para que la UI de éxito de Auth se muestre, pero indicando el problema de Firestore.
+      }
+      // =====================================================================================
+
+    } catch (error: any) { // Este catch es para errores de Firebase Authentication (createUserWithEmailAndPassword)
+      console.error("Error al registrar (Auth):", error.code, error.message);
       let msg = "Error al registrarse. ";
       switch (error.code) {
           case 'auth/email-already-in-use': msg += "Este correo ya está en uso."; break;
