@@ -1,24 +1,13 @@
 // src/lib/firebase.ts
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, deleteApp, FirebaseApp } from 'firebase/app'; // Importa deleteApp
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
-// Define una interfaz para la configuración de Firebase para mayor claridad de tipos
-interface FirebaseConfig {
-  apiKey: string; // Hacemos que estas sean requeridas ya que las hardcodearemos
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-  measurementId?: string; // Optional, as it might not always be used
-  databaseURL?: string;
-}
-
-// ** ATENCIÓN: VALORES HARDCODEADOS PARA PRUEBAS Y DIAGNÓSTICO **
-// ESTA ES UNA SOLUCIÓN TEMPORAL PARA DEBUGGING.
-// EN UN ENTORNO REAL, PREFERIRÍAS CARGAR ESTO DESDE VARIABLES DE ENTORNO SEGURAS.
-const firebaseConfig: FirebaseConfig = {
+// =====================================================================================
+// ATENCIÓN: VALORES HARDCODEADOS PARA PRUEBAS Y DIAGNÓSTICO
+// Mantenemos la API Key hardcodeada para asegurar que llegue correctamente al build.
+// =====================================================================================
+const firebaseConfig = {
     apiKey: "AIzaSyCU3m_COcDGHeCMVA7AnqOFa-Xy9l8Xo2I", // <-- ¡TU API KEY REAL AQUÍ!
     authDomain: "boe-radar.firebaseapp.com", // <-- ¡TU AUTH DOMAIN REAL AQUÍ!
     projectId: "boe-radar", // <-- ¡TU PROJECT ID REAL AQUÍ!
@@ -26,31 +15,31 @@ const firebaseConfig: FirebaseConfig = {
     messagingSenderId: "560783731487", // <-- ¡TU MESSAGING SENDER ID REAL AQUÍ!
     appId: "1:560783731487:web:62d122c24342997bea9e2a", // <-- ¡TU APP ID REAL AQUÍ!
     measurementId: "G-GY3229P60H" // <-- ¡TU MEASUREMENT ID REAL AQUÍ si lo usas!
+    // databaseURL: "" // Deja esto vacío si usas Firestore Native
 };
 
-// ** SOLO PARA DIAGNÓSTICO: ESTE LOG DEBERÍA MOSTRAR LA CONFIGURACIÓN CORRECTA AHORA **
+// =====================================================================================
+
 console.log("Firebase config hardcodeada en el cliente:", firebaseConfig);
 console.log("API Key hardcodeada en cliente:", firebaseConfig.apiKey ? "Presente" : "Faltante o Vacía");
 
-
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
 
-// 3. Verificar que tenemos una configuración válida antes de inicializar Firebase
-if (!firebaseConfig.apiKey) {
-  console.error("¡ERROR FATAL! La configuración de Firebase está incompleta para la inicialización (hardcodeada).");
-  throw new Error("La configuración de Firebase es requerida para la inicialización.");
+// Si ya existe una app de Firebase, la borramos para forzar una reinicialización COMPLETA.
+// ESTO ES PRINCIPALMENTE PARA DEPURACIÓN EN SITUACIONES DE ESTADO COMPLEJO COMO EL "Unknown SID".
+// En una aplicación de producción normal, no deberías necesitar deleteApp constantemente.
+if (getApps().length) {
+    console.log("Detectada app Firebase existente. Borrándola para reinicializar.");
+    deleteApp(getApp());
 }
 
-// Inicializar Firebase solo una vez para evitar errores de duplicidad
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+// Inicializa la app de Firebase.
+app = initializeApp(firebaseConfig);
+console.log("App Firebase inicializada o reinicializada.");
 
-auth = getAuth(app);
-db = getFirestore(app);
+const auth: Auth = getAuth(app);
+// NO exportamos 'db' directamente desde aquí.
+// En 'auth-form.tsx', obtendremos 'db' con getFirestore(getApp()) para mayor robustez
+// y evitar problemas de 'Unknown SID'.
 
-export { app, auth, db };
+export { app, auth }; // Exportamos 'app' y 'auth'. 'db' se obtendrá en el componente.

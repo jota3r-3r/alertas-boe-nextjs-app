@@ -71,7 +71,7 @@ function AuthForm() {
       }
       // =====================================================================================
 
-    } catch (error: any) { // Este catch es para errores de Firebase Authentication (createUserWithEmailAndPassword)
+    } catch (error: any) { // Este catch es para errores de Firebase Authentication
       console.error("Error al registrar (Auth):", error.code, error.message);
       let msg = "Error al registrarse. ";
       switch (error.code) {
