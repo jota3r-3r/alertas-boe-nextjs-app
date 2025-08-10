@@ -16,8 +16,8 @@ interface FirebaseConfig {
 }
 
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
+let auth: Auth; // <--- ¡VUELVE A SER 'let'!
+let db: Firestore;   // <--- ¡VUELVE A SER 'let'!
 
 // Determine la configuración de Firebase
 let config: FirebaseConfig | undefined;

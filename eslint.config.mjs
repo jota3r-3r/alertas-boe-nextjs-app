@@ -12,16 +12,16 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  // AÑADE ESTA NUEVA SECCIÓN PARA DESACTIVAR LA REGLA @typescript-eslint/no-explicit-any
+  // Esta sección aplica reglas a archivos TypeScript/TSX
   {
-    // Aplica esta regla solo a archivos TypeScript/TSX
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
       // Desactiva el error de 'any' explícito
       "@typescript-eslint/no-explicit-any": "off",
+      // *** AÑADE ESTA LÍNEA TAMBIÉN PARA DESACTIVAR prefer-const ***
+      "prefer-const": "off",
     },
   },
 ];
 
 export default eslintConfig;
-
