@@ -45,8 +45,7 @@ function AuthForm() {
       setMessage(`¡Usuario ${newUser.email} registrado y logeado exitosamente!`);
 
       // =====================================================================================
-      // NUEVO BLOQUE TRY-CATCH para la escritura en Firestore
-      // Esto aísla los errores de Firestore de los de Authentication y maneja el "Unknown SID".
+      // BLOQUE TRY-CATCH para la escritura en Firestore
       // =====================================================================================
       try {
           // Obtiene la instancia de la aplicación Firebase ya inicializada.
@@ -64,10 +63,11 @@ function AuthForm() {
           console.log("Información básica del usuario guardada en Firestore.");
 
       } catch (firestoreError: any) { // Captura errores ESPECÍFICOS de Firestore aquí
-          console.error("Error al guardar en Firestore (después de autenticación):", firestoreError.code, firestoreError.message);
-          // Si hubo un error en Firestore, informamos al usuario, pero la cuenta de Auth ya está creada.
-          setMessage(`¡Usuario ${newUser.email} registrado, pero hubo un error al guardar sus datos en Firestore. (${firestoreError.message})`);
-          // No hacemos 'return' aquí para que la UI de éxito de Auth se muestre, pero indicando el problema de Firestore.
+          // CAMBIO RECIENTE: IMPRIMIMOS EL OBJETO DE ERROR COMPLETO PARA UN DIAGNÓSTICO DETALLADO
+          console.error("Error al guardar en Firestore (después de autenticación):", firestoreError); 
+          
+          // Mensaje para el usuario, intentando usar el mensaje del error o su representación en cadena.
+          setMessage(`¡Usuario ${newUser.email} registrado, pero hubo un error al guardar sus datos en Firestore. (${firestoreError.message || firestoreError.toString()})`);
       }
       // =====================================================================================
 
@@ -135,39 +135,39 @@ function AuthForm() {
       ) : (
         // Contenedor para el formulario de login/registro
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <h3>Regístrate o Inicia Sesión</h3>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            placeholder="Correo electrónico"
-            style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}
-          />
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            placeholder="Contraseña (mínimo 6 caracteres)"
-            style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}
-          />
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              onClick={handleRegister}
-              style={{ 
-                flex: 1, backgroundColor: '#28a745', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '1em' 
-              }}
-            >
-              Registrarse
-            </button> 
-            <button 
-              onClick={handleLogin}
-              style={{ 
-                flex: 1, backgroundColor: '#007bff', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '1em' 
-              }}
-            >
-              Iniciar Sesión
-            </button>
-          </div>
+            <h3>Regístrate o Inicia Sesión</h3>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="Correo electrónico"
+              style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}
+            />
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="Contraseña (mínimo 6 caracteres)"
+              style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={handleRegister}
+                style={{ 
+                  flex: 1, backgroundColor: '#28a745', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '1em' 
+                }}
+              >
+                Registrarse
+              </button> 
+              <button 
+                onClick={handleLogin}
+                style={{ 
+                  flex: 1, backgroundColor: '#007bff', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '1em' 
+                }}
+              >
+                Iniciar Sesión
+              </button>
+            </div>
         </div>
       )}
       <p style={{ color: message.includes('Error') ? '#dc3545' : '#28a745', textAlign: 'center', fontWeight: 'bold' }}>{message}</p>
